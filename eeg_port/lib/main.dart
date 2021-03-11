@@ -1,10 +1,29 @@
+import 'dart:ffi';
+import 'dart:io';
+
+import 'package:eeg_port/mqtt.dart';
 import 'package:flutter/material.dart';
+import 'package:mqtt_client/mqtt_client.dart';
+import 'package:mqtt_client/mqtt_server_client.dart';
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyApp createState() {
+    return _MyApp();
+  }
+
+
+}
+var server_connect = new mqtt_neuro();
+
+class _MyApp extends State<MyApp>  {
+
+
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -49,17 +68,126 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
+
+  int _counter = 0;
+  List<String> messages = [];
+
+  final client = MqttServerClient('test.mosquitto.org', '');
+
+  Future<List<String>> main() async {
+    client.logging(on: true);
+    client.keepAlivePeriod = 5;
+    client.autoReconnect = true;
+    client.resubscribeOnAutoReconnect = false;
+    client.onAutoReconnect = onAutoReconnect;
+    client.onAutoReconnected = onAutoReconnected;
+    client.onConnected = onConnected;
+    client.onSubscribed = onSubscribed;
+    client.pongCallback = pong;
+
+    final connMess = MqttConnectMessage()
+        .withClientIdentifier('Mqtt_MyClientUniqueId')
+        .keepAliveFor(5) // Must agree with the keep alive set above or not set
+        .withWillTopic('willtopic') // If you set this you must set a will message
+        .withWillMessage('My Will message')
+        .startClean() // Non persistent session for testing
+        .withWillQos(MqttQos.atLeastOnce);
+    print('EXAMPLE::Mosquitto client connecting....');
+    client.connectionMessage = connMess;
+
+    try {
+      await client.connect();
+    } on Exception catch (e) {
+      print('EXAMPLE::client exception - $e');
+      client.disconnect();
+    }
+
+    /// Check we are connected
+    if (client.connectionStatus.state == MqttConnectionState.connected) {
+      print('EXAMPLE::Mosquitto client connected');
+    } else {
+      /// Use status here rather than state if you also want the broker return code.
+      print(
+          'EXAMPLE::ERROR Mosquitto client connection failed - disconnecting, status is ${client.connectionStatus}');
+      client.disconnect();
+      exit(-1);
+    }
+    // ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈ Ok, lets try a subscription ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈///
+    // Subscribing for voltage from different ADC units.
+    const topic_sub1 = 'neuroPort/adc1115/voltage0';
+    const topic_sub2 = 'neuroPort/adc1115/voltage1';
+    const topic_sub3 = 'neuroPort/adc1115/voltage2';
+    const topic_sub4 = 'neuroPort/adc1115/voltage3';
+    client.subscribe(topic_sub1, MqttQos.atMostOnce);
+    client.subscribe(topic_sub2, MqttQos.atMostOnce);
+    client.subscribe(topic_sub3, MqttQos.atMostOnce);
+    client.subscribe(topic_sub4, MqttQos.atMostOnce);
+    /// The client has a change notifier object(see the Observable class) which we then listen to to get
+    /// notifications of published updates to each subscribed topic.
+    client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c){
+      final MqttPublishMessage recMess = c[0].payload;
+      final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
+      print('EXAMPLE::Change notification:: topic is <${c[0].topic}>, payload is <-- $pt -->');
+      getData(pt);
+      messages.add(pt);
+      print('');
+    });
+    print("Messages Future List : ${messages}");
+    return messages;
+  }
+
+  /// The subscribed callback
+  void onSubscribed(String topic) {
+    print('EXAMPLE::Subscription confirmed for topic $topic');
+  }
+
+  /// The pre auto re connect callback
+  void onAutoReconnect() {
+    print(
+        'EXAMPLE::onAutoReconnect client callback - Client auto reconnection sequence will start');
+  }
+
+  /// The post auto re connect callback
+  void onAutoReconnected() {
+    print(
+        'EXAMPLE::onAutoReconnected client callback - Client auto reconnection sequence has completed');
+  }
+
+  /// The successful connect callback
+  void onConnected() {
+    print(
+        'EXAMPLE::OnConnected client callback - Client connection was successful');
+  }
+
+  /// Pong callback
+  void pong() {
+    print(
+        'EXAMPLE::Ping response client callback invoked - you may want to disconnect your broker here');
+  }
+  String payload_data;
+  void getData(String payload){
+    print("get data payload is : ${payload}");
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      payload_data = payload;
     });
+
+  }
+  void _incrementCounter() {
+    main();
+    /*setState(() {
+      // This call to setState tells the Flutter framework that something has
+      // changed in this State, which causes it to rerun the build method below
+      // so that the display can reflect the updated values. If we changed
+      // _counter without calling setState(), then the build method would not be
+      // called again, and so nothing would appear to happen.
+      _counter++;
+    });*/
   }
 
   @override
@@ -72,45 +200,25 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
+              '$payload_data',
               style: Theme.of(context).textTheme.headline4,
+            ),
+            FloatingActionButton(
+              onPressed: _incrementCounter,
+              tooltip: 'Increment',
+              child: Icon(Icons.add),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

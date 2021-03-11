@@ -5,7 +5,8 @@ import 'dart:io';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
-class mqtt {
+class mqtt_neuro {
+
 /*
  * Package : mqtt_client
  * Author : S. Hamblett <steve.hamblett@linux.com>
@@ -26,9 +27,9 @@ class mqtt {
   /// as long as you can break its connection to this process. You could wait for the first pong callback to print out
   /// (these are every 5 seconds) then stop/break connection to the server and reinstate it.
   ///
-  final client = MqttServerClient('#Your IP', '');
+  final client = MqttServerClient('test.mosquitto.org', '');
 
-  Future<int> main() async {
+  Future<List<dynamic>> main() async {
     /// A websocket URL must start with ws:// or wss:// or Dart will throw an exception, consult your websocket MQTT broker
     /// for details.
     /// To use websockets add the following lines -:
@@ -122,30 +123,25 @@ class mqtt {
     client.subscribe(topic_sub3, MqttQos.atMostOnce);
     client.subscribe(topic_sub4, MqttQos.atMostOnce);
 
+    List<dynamic> messages =[];
+
     /// The client has a change notifier object(see the Observable class) which we then listen to to get
     /// notifications of published updates to each subscribed topic.
     client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c){
       final MqttPublishMessage recMess = c[0].payload;
       final pt = MqttPublishPayload.bytesToStringAsString(recMess.payload.message);
-
       /// The above may seem a little convoluted for users only interested in the
       /// payload, some users however may be interested in the received publish message,
       /// lets not constrain ourselves yet until the package has been in the wild
       /// for a while.
       /// The payload is a byte buffer, this will be specific to the topic
       print('EXAMPLE::Change notification:: topic is <${c[0].topic}>, payload is <-- $pt -->');
+      messages.add(pt);
       print('');
     });
+    print("${messages}");
 
-//    /// If needed you can listen for published messages that have completed the publishing
-//    /// handshake which is Qos dependant. Any message received on this stream has completed its
-//    /// publishing handshake with the broker.
-//    client.published.listen((MqttPublishMessage message) {
-//      print(
-//          'EXAMPLE::Published notification:: topic is ${message.variableHeader.topicName}, with Qos ${message.header.qos}');
-//    });
-
-    return 0;
+    return messages;
   }
 
   /// The subscribed callback
