@@ -7,6 +7,7 @@
 #include<PubSubClient.h>
 
 #include "ADS1X15.h"
+//#include "Adafruit_ADS1X15.h"
 
 extern "C" {
   #include "freertos/FreeRTOS.h"
@@ -14,8 +15,8 @@ extern "C" {
 }
 
 // Wifi Credentials.
-const char* ssid = "";
-const char* password = "";
+const char* ssid = "FiOS-6KACV";//"FiOS-6KACV"; //Besio3DPrinter
+const char* password = "rad3coffin4025rows";//"rad3coffin4025rows";
 unsigned long lastMsg = 0;
 
 #define MSG_BUFFER_SIZE  (50)
@@ -24,23 +25,23 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 
 // public broker for now.
-const char* mqtt_server = "test.mosquitto.org";
+const char* mqtt_server = "test.mosquitto.org";//"test.mosquitto.org"; // ESP- 192.168.1.162
 
 char msg[MSG_BUFFER_SIZE];
 int value = 0;
 
 // Define publisher route.
-const char* MQTT_PUB_VOLT0 = "neuroPort/adc1115/voltage0";
-const char* MQTT_PUB_VOLT1 = "neuroPort/adc1115/voltage1";
-const char* MQTT_PUB_VOLT2 = "neuroPort/adc1115/voltage2";
-const char* MQTT_PUB_VOLT3 = "neuroPort/adc1115/voltage3";
+const char* MQTT_PUB_VOLT0 = "neuroPort/adc1115/voltage0/Device1";
+const char* MQTT_PUB_VOLT1 = "neuroPort/adc1115/voltage1/Device1";
+const char* MQTT_PUB_VOLT2 = "neuroPort/adc1115/voltage2/Device1";
+const char* MQTT_PUB_VOLT3 = "neuroPort/adc1115/voltage3/Device1";
 
 ADS1115 ADS(0x48);
 
 
 void setup_wifi() {
 
-  delay(10);
+//  delay(10);
   // We start by connecting to a WiFi network.
   Serial.println();
   Serial.print("Connecting to ");
@@ -92,7 +93,7 @@ void reconnect() {
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
-      delay(5000);
+      delay(1000);
     }
   }
 }
@@ -100,15 +101,14 @@ void reconnect() {
 void setup() 
 {
   Serial.begin(115200);
-  
   setup_wifi();
   client.setServer(mqtt_server, 1883);
   client.setCallback(callback);  
   Serial.println(__FILE__);
   Serial.print("ADS1X15_LIB_VERSION: ");
   Serial.println(ADS1X15_LIB_VERSION);
- 
   ADS.begin();
+  ADS.setMode(0);
 }
 
 void loop() 
@@ -125,11 +125,11 @@ void loop()
   float v2 = val_2 * f;
   float v3 = val_3 * f; 
   Serial.print("\tAnalog0: "); Serial.print(val_0); Serial.print('\t'); Serial.println(v0, 3);
-  Serial.print("\tAnalog1: "); Serial.print(val_1); Serial.print('\t'); Serial.println(v1, 3);
-  Serial.print("\tAnalog2: "); Serial.print(val_2); Serial.print('\t'); Serial.println(v2 * f, 3);
-  Serial.print("\tAnalog3: "); Serial.print(val_3); Serial.print('\t'); Serial.println(v3 * f, 3);
-  Serial.println();
-  delay(1000);
+//  Serial.print("\tAnalog1: "); Serial.print(val_1); Serial.print('\t'); Serial.println(v1, 3);
+//  Serial.print("\tAnalog2: "); Serial.print(val_2); Serial.print('\t'); Serial.println(v2 * f, 3);
+//  Serial.print("\tAnalog3: "); Serial.print(val_3); Serial.print('\t'); Serial.println(v3 * f, 3);
+//  Serial.println();
+  delay(10);
   // handel reconnection.
   if(!client.connected()){
     reconnect();
@@ -140,9 +140,15 @@ void loop()
   
   if (now - lastMsg > 2000) {
     lastMsg = now;
-    Serial.print("Publish message: ");
+    Serial.print("Publish message: V0");
+    Serial.println(v0);
+    client.publish(MQTT_PUB_VOLT0, String(v0).c_str());
+    Serial.print("Publish message: V1");
     Serial.println(v1);
-    client.publish(MQTT_PUB_VOLT0, String(v1).c_str());
+    client.publish(MQTT_PUB_VOLT1, String(v1).c_str());
+    client.publish(MQTT_PUB_VOLT2, String(v2).c_str());
+    client.publish(MQTT_PUB_VOLT3, String(v3).c_str());
+
   }
 
 }

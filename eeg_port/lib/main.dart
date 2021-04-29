@@ -1,7 +1,7 @@
-import 'dart:ffi';
+
 import 'dart:io';
 
-import 'package:eeg_port/mqtt.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
@@ -18,7 +18,6 @@ class MyApp extends StatefulWidget {
 
 
 }
-var server_connect = new mqtt_neuro();
 
 class _MyApp extends State<MyApp>  {
 
@@ -44,7 +43,7 @@ class _MyApp extends State<MyApp>  {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'Portable EEG: '),
     );
   }
 }
@@ -115,10 +114,10 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     // ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈ Ok, lets try a subscription ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈///
     // Subscribing for voltage from different ADC units.
-    const topic_sub1 = 'neuroPort/adc1115/voltage0';
-    const topic_sub2 = 'neuroPort/adc1115/voltage1';
-    const topic_sub3 = 'neuroPort/adc1115/voltage2';
-    const topic_sub4 = 'neuroPort/adc1115/voltage3';
+    const topic_sub1 = 'neuroPort/adc1115/voltage0/Device1';
+    const topic_sub2 = 'neuroPort/adc1115/voltage1/Device1';
+    const topic_sub3 = 'neuroPort/adc1115/voltage2/Device1';
+    const topic_sub4 = 'neuroPort/adc1115/voltage3/Device1';
     client.subscribe(topic_sub1, MqttQos.atMostOnce);
     client.subscribe(topic_sub2, MqttQos.atMostOnce);
     client.subscribe(topic_sub3, MqttQos.atMostOnce);
@@ -208,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              '$payload_data',
+              'Payload is : $payload_data',
               style: Theme.of(context).textTheme.headline4,
             ),
             FloatingActionButton(

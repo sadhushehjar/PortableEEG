@@ -114,10 +114,10 @@ class mqtt_neuro {
     }
     // ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈ Ok, lets try a subscription ≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈///
     // Subscribing for voltage from different ADC units.
-    const topic_sub1 = 'neuroPort/adc1115/voltage0';
-    const topic_sub2 = 'neuroPort/adc1115/voltage1';
-    const topic_sub3 = 'neuroPort/adc1115/voltage2';
-    const topic_sub4 = 'neuroPort/adc1115/voltage3';
+    const topic_sub1 = 'neuroPort/adc1115/voltage0/Device1';
+    const topic_sub2 = 'neuroPort/adc1115/voltage1/Device1';
+    const topic_sub3 = 'neuroPort/adc1115/voltage2/Device1';
+    const topic_sub4 = 'neuroPort/adc1115/voltage3/Device1';
     client.subscribe(topic_sub1, MqttQos.atMostOnce);
     client.subscribe(topic_sub2, MqttQos.atMostOnce);
     client.subscribe(topic_sub3, MqttQos.atMostOnce);

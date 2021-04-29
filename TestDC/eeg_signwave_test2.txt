@@ -1,0 +1,3 @@
+neuroPort/adc1115/voltage0,b'0.58'
+neuroPort/adc1115/voltage0,b'0.57'
+neuroPort/adc1115/voltage0,b'0.57'
